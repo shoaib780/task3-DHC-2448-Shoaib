@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // YEH NAYA IMPORT ADD KARO
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:task3/loingscreen.dart';
 
@@ -15,21 +16,32 @@ class _SignupState extends State<Signup> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController(); // YEH NAYA CONTROLLER ADD KARO
   bool _isLoading = false;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // YEH NAYA LINE ADD KARO
 
   Future<void> _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        // Firebase mein user create karo
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passController.text.trim(),
         );
 
+        // YEH NAYA CODE: Firestore mein user data save karo
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'name': _nameController.text.trim(), // User ka naam
+          'email': _emailController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'userId': userCredential.user!.uid,
+        });
+
         setState(() => _isLoading = false);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup Successful')),
+          const SnackBar(content: Text('Signup Successful')),
         );
 
         Navigator.pushReplacement(
@@ -49,6 +61,11 @@ class _SignupState extends State<Signup> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
+        );
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
         );
       }
     }
@@ -80,6 +97,32 @@ class _SignupState extends State<Signup> {
                       color: Colors.black)),
               const SizedBox(height: 15),
 
+              // Full Name Field (YEH FIELD UPDATE KARO)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: TextFormField(
+                  controller: _nameController, // YEH CONTROLLER ADD KARO
+                  decoration: InputDecoration(
+                    labelText: 'Full name',
+                    fillColor: const Color(0xFFE3BE85),
+                    filled: true,
+                    prefixIcon:
+                    const Icon(Icons.person, color: Colors.black, size: 28),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black, width: 3),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your name';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 15),
+
               // Email
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -87,12 +130,12 @@ class _SignupState extends State<Signup> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    fillColor: Color(0xFFE3BE85),
+                    fillColor: const Color(0xFFE3BE85),
                     filled: true,
                     prefixIcon:
-                    Icon(Icons.email_outlined, color: Colors.black, size: 28),
+                    const Icon(Icons.email_outlined, color: Colors.black, size: 28),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 3),
+                      borderSide: const BorderSide(color: Colors.black, width: 3),
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
@@ -115,13 +158,13 @@ class _SignupState extends State<Signup> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Enter password',
-                    fillColor: Color(0xFFE3BE85),
+                    fillColor: const Color(0xFFE3BE85),
                     filled: true,
-                    prefixIcon: Icon(Icons.lock, color: Colors.black, size: 28),
+                    prefixIcon: const Icon(Icons.lock, color: Colors.black, size: 28),
                     suffixIcon:
-                    Icon(Icons.remove_red_eye, color: Colors.black),
+                    const Icon(Icons.remove_red_eye, color: Colors.black),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 3),
+                      borderSide: const BorderSide(color: Colors.black, width: 3),
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
@@ -142,13 +185,13 @@ class _SignupState extends State<Signup> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Confirm password',
-                    fillColor: Color(0xFFE3BE85),
+                    fillColor: const Color(0xFFE3BE85),
                     filled: true,
-                    prefixIcon: Icon(Icons.lock, color: Colors.black, size: 28),
+                    prefixIcon: const Icon(Icons.lock, color: Colors.black, size: 28),
                     suffixIcon:
-                    Icon(Icons.remove_red_eye, color: Colors.black),
+                    const Icon(Icons.remove_red_eye, color: Colors.black),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 3),
+                      borderSide: const BorderSide(color: Colors.black, width: 3),
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
@@ -165,7 +208,7 @@ class _SignupState extends State<Signup> {
 
               // Submit Button
               _isLoading
-                  ? CircularProgressIndicator()
+                  ? const CircularProgressIndicator()
                   : GestureDetector(
                 onTap: _handleSignup,
                 child: Container(
@@ -218,7 +261,7 @@ class _SignupState extends State<Signup> {
                       endIndent: 10,
                     ),
                   ),
-                  Text("OR"),
+                  const Text("OR"),
                   Expanded(
                     child: Divider(
                       color: Colors.black,
@@ -230,7 +273,7 @@ class _SignupState extends State<Signup> {
                 ],
               ),
 
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

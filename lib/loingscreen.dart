@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:task3/signup.dart';
-import 'package:task3/todo_list.dart';
-
+import 'package:task3/profile_screen.dart'; // YEH IMPORT ADD KARO
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,8 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-
-
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
@@ -34,10 +33,23 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim(),
         );
 
-        // Navigate to Todo screen
+        // Firestore mein check karo agar user data already hai ya nahi
+        final userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+
+        if (!userDoc.exists) {
+          // Agar user data Firestore mein nahi hai toh create karo
+          await _firestore.collection('users').doc(userCredential.user!.uid).set({
+            'name': userCredential.user!.displayName ?? 'User',
+            'email': userCredential.user!.email,
+            'createdAt': FieldValue.serverTimestamp(),
+            'userId': userCredential.user!.uid,
+          });
+        }
+
+        // Navigate to Profile screen (YEH LINE CHANGE KI HAI)
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => TodoScreen()),
+          MaterialPageRoute(builder: (context) => ProfileScreen()),
         );
       } on FirebaseAuthException catch (e) {
         String errorMsg = "Login failed";
@@ -61,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE3BE85),
+      backgroundColor: const Color(0xFFE3BE85),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -75,8 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 fit: BoxFit.fill,
               ),
             ),
-            SizedBox(height: 15),
-            Text('Sign in',
+            const SizedBox(height: 15),
+            const Text('Sign in',
                 style: TextStyle(
                     fontSize: 31,
                     fontWeight: FontWeight.bold,
@@ -88,10 +100,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   labelText: 'Email',
                   filled: true,
-                  fillColor: Color(0xFFE3BE85),
-                  prefixIcon: Icon(Icons.email_outlined, color: Colors.black),
+                  fillColor: const Color(0xFFE3BE85),
+                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.black),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 3),
+                    borderSide: const BorderSide(color: Colors.black, width: 3),
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
@@ -113,11 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   labelText: 'Password',
                   filled: true,
-                  fillColor: Color(0xFFE3BE85),
-                  prefixIcon: Icon(Icons.lock, color: Colors.black),
-                  suffixIcon: Icon(Icons.remove_red_eye, color: Colors.black),
+                  fillColor: const Color(0xFFE3BE85),
+                  prefixIcon: const Icon(Icons.lock, color: Colors.black),
+                  suffixIcon: const Icon(Icons.remove_red_eye, color: Colors.black),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 3),
+                    borderSide: const BorderSide(color: Colors.black, width: 3),
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
@@ -146,9 +158,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             _isLoading
-                ? CircularProgressIndicator()
+                ? const CircularProgressIndicator()
                 : GestureDetector(
               onTap: _submitForm,
               child: Container(
@@ -158,18 +170,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 height: 58,
                 width: 180,
-                child: Center(
+                child: const Center(
                   child: Text('Submit',
                       style:
                       TextStyle(fontSize: 25, color: Colors.white)),
                 ),
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Don\'t have an account? ',
+                const Text('Don\'t have an account? ',
                     style: TextStyle(fontSize: 20, color: Colors.black)),
                 TextButton(
                   onPressed: () {
@@ -178,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (context) => Signup()),
                     );
                   },
-                  child: Text('Sign up',
+                  child: const Text('Sign up',
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -186,27 +198,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Go to home => ',
-                    style: TextStyle(fontSize: 20, color: Colors.black)),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => TodoScreen()),
-                    );
-                  },
-                  child: Text('Home',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black)),
-                )
-              ],
-            ),
-            SizedBox(height: 10),
+
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -217,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     endIndent: 10,
                   ),
                 ),
-                Text("OR"),
+                const Text("OR"),
                 Expanded(
                   child: Divider(
                     color: Colors.black,
@@ -228,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
